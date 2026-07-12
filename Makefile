@@ -5,7 +5,7 @@ CUBLAS := -lcublas -lcudart
 
 KERNELS := 00_naive 02_shared_tiled 03_1d_blocktiling 04_2d_blocktiling \
            05_vectorized 06_bank_conflict_free 07_double_buffered 08_vectorized_all \
-           09_wmma_tensorcore
+           09_wmma_tensorcore 10_wmma_multi
 KERNEL_SRCS := $(addsuffix .cu, $(addprefix kernels/, $(KERNELS)))
 KERNEL_EXES := $(addsuffix .exe, $(addprefix kernels/, $(KERNELS)))
 

@@ -41,6 +41,10 @@ extern float run_wmma(int M, int N, int K,
                       const __half* d_A, const __half* d_B, float* d_C,
                       int warmup_iters, int bench_iters);
 
+extern float run_wmma_multi(int M, int N, int K,
+                            const __half* d_A, const __half* d_B, float* d_C,
+                            int warmup_iters, int bench_iters);
+
 struct KernelEntry {
     const char* name;
     float (*fp32_kernel)(int, int, int, const float*, const float*, float*, int, int);
@@ -123,7 +127,6 @@ int main() {
 
     float *d_C_scratch;
     CHECK_CUDA(cudaMalloc(&d_C_scratch, size_c));
-    CHECK_CUDA(cudaMalloc(&d_C_scratch, size_c));
 
     float ms = run_naive(M, N, K, d_A_f32, d_B_f32, d_C_scratch, WARMUP, BENCH);
     print_gflops_row(results[0].name, ms, M, N, K, gflops_ref_f32);
@@ -154,6 +157,9 @@ int main() {
 
     float ms_wmma = run_wmma(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
     print_gflops_row("WMMA Tensor Core (Level 9)", ms_wmma, M, N, K, gflops_ref_f16);
+
+    float ms_wmma_multi = run_wmma_multi(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
+    print_gflops_row("WMMA Multi-Tile (Level 10)", ms_wmma_multi, M, N, K, gflops_ref_f16);
     printf("+-------------------------------+------------+----------+\n");
 
     printf("\nAll kernels verified against cuBLAS reference.\n");
