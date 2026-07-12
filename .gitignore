@@ -1,0 +1,89 @@
+# Build directories
+build/
+cmake-build-*/
+dist/
+*.build/
+
+# Compiled objects and libraries
+*.o
+*.a
+*.so
+*.so.*
+*.dylib
+*.lib
+*.dll
+*.exe
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.cmake
+*.dir/
+
+# Executables
+*.out
+*.app
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.Python
+*.egg
+.pytest_cache/
+.coverage
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-workspace
+*.sublime-project
+.vim/
+.emacs.d/
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# CUDA specific
+*.fatbin
+*.cubin
+*.ptx
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Dependencies
+dependencies/
+third_party/
+extern/
+
+# Backup and temp files
+*.bak
+*.backup
+*.tmp
+*.swp
+*#
+
+# Generated files
+*.o.d
+*.cu.o
+
+# Profiling and benchmarking
+*.prof
+*.perf
