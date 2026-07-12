@@ -11,7 +11,7 @@ __global__ void gemm_vectorized_all(int M, int N, int K,
     int threadCol = threadIdx.x % (BN / TN);
     int threadRow = threadIdx.x / (BN / TN);
 
-    __shared__ float As[BM][BK + 1];
+    __shared__ float As[BM][BK];
     __shared__ float Bs[BK][BN];
 
     float threadResults[TM][TN] = {0.0f};
@@ -103,7 +103,7 @@ int main() {
 
     srand(42);
     printf("=== Phase 8: Fully Vectorized (float4 A + B + C) ===\n");
-    printf("Config: BM=%d, BN=%d, BK=%d, TM=%d, TN=%d (As padded, float4 everywhere)\n", BM, BN, BK, TM, TN);
+    printf("Config: BM=%d, BN=%d, BK=%d, TM=%d, TN=%d (float4 A+B+C)\n", BM, BN, BK, TM, TN);
     print_device_info();
 
     size_t size_a = (size_t)M * K * sizeof(float);
