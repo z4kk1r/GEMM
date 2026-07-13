@@ -49,6 +49,10 @@ extern float run_wmma_direct(int M, int N, int K,
                              const __half* d_A, const __half* d_B, float* d_C,
                              int warmup_iters, int bench_iters);
 
+extern float run_wmma_opt(int M, int N, int K,
+                          const __half* d_A, const __half* d_B, float* d_C,
+                          int warmup_iters, int bench_iters);
+
 struct KernelEntry {
     const char* name;
     float (*fp32_kernel)(int, int, int, const float*, const float*, float*, int, int);
@@ -167,6 +171,9 @@ int main() {
 
     float ms_wmma_direct = run_wmma_direct(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
     print_gflops_row("WMMA Direct-Load (Level 11)", ms_wmma_direct, M, N, K, gflops_ref_f16);
+
+    float ms_wmma_opt = run_wmma_opt(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
+    print_gflops_row("WMMA Optimized (Level 12)", ms_wmma_opt, M, N, K, gflops_ref_f16);
     printf("+-------------------------------+------------+----------+\n");
 
     printf("\nAll kernels verified against cuBLAS reference.\n");
