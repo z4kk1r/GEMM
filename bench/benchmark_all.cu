@@ -57,6 +57,14 @@ extern float run_wmma_combined(int M, int N, int K,
                                const __half* d_A, const __half* d_B, float* d_C,
                                int warmup_iters, int bench_iters);
 
+extern float run_wmma_padded(int M, int N, int K,
+                             const __half* d_A, const __half* d_B, float* d_C,
+                             int warmup_iters, int bench_iters);
+
+extern float run_wmma_pipelined(int M, int N, int K,
+                                const __half* d_A, const __half* d_B, float* d_C,
+                                int warmup_iters, int bench_iters);
+
 struct KernelEntry {
     const char* name;
     float (*fp32_kernel)(int, int, int, const float*, const float*, float*, int, int);
@@ -181,6 +189,12 @@ int main() {
 
     float ms_wmma_combined = run_wmma_combined(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
     print_gflops_row("WMMA Combined (Level 13)", ms_wmma_combined, M, N, K, gflops_ref_f16);
+
+    float ms_wmma_padded = run_wmma_padded(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
+    print_gflops_row("WMMA Padded (Level 14)", ms_wmma_padded, M, N, K, gflops_ref_f16);
+
+    float ms_wmma_pipelined = run_wmma_pipelined(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
+    print_gflops_row("WMMA Pipelined (Level 15)", ms_wmma_pipelined, M, N, K, gflops_ref_f16);
     printf("+-------------------------------+------------+----------+\n");
 
     printf("\nAll kernels verified against cuBLAS reference.\n");
