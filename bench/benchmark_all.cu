@@ -67,6 +67,10 @@ extern float run_wmma_notranspose(int M, int N, int K,
                                    const __half* d_A, const __half* d_B, float* d_C,
                                    int warmup_iters, int bench_iters);
 
+extern float run_wmma_deepk(int M, int N, int K,
+                             const __half* d_A, const __half* d_B, float* d_C,
+                             int warmup_iters, int bench_iters);
+
 struct KernelEntry {
     const char* name;
     float (*fp32_kernel)(int, int, int, const float*, const float*, float*, int, int);
@@ -200,6 +204,9 @@ int main() {
 
     float ms_wmma_notranspose = run_wmma_notranspose(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
     print_gflops_row("WMMA No-Transpose (Level 16)", ms_wmma_notranspose, M, N, K, gflops_ref_f16);
+
+    float ms_wmma_deepk = run_wmma_deepk(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
+    print_gflops_row("WMMA Deep-K (Level 17)", ms_wmma_deepk, M, N, K, gflops_ref_f16);
     printf("+-------------------------------+------------+----------+\n");
 
     printf("\nAll kernels verified against cuBLAS reference.\n");
