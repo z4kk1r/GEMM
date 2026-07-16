@@ -1,5 +1,3 @@
-#define BENCHMARK_ALL
-
 #include "../common.cuh"
 
 const int M = 4096, N = 4096, K = 4096;
@@ -62,8 +60,12 @@ extern float run_wmma_padded(int M, int N, int K,
                              int warmup_iters, int bench_iters);
 
 extern float run_wmma_pipelined(int M, int N, int K,
-                                const __half* d_A, const __half* d_B, float* d_C,
-                                int warmup_iters, int bench_iters);
+                                 const __half* d_A, const __half* d_B, float* d_C,
+                                 int warmup_iters, int bench_iters);
+
+extern float run_wmma_notranspose(int M, int N, int K,
+                                   const __half* d_A, const __half* d_B, float* d_C,
+                                   int warmup_iters, int bench_iters);
 
 struct KernelEntry {
     const char* name;
@@ -195,6 +197,9 @@ int main() {
 
     float ms_wmma_pipelined = run_wmma_pipelined(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
     print_gflops_row("WMMA Pipelined (Level 15)", ms_wmma_pipelined, M, N, K, gflops_ref_f16);
+
+    float ms_wmma_notranspose = run_wmma_notranspose(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
+    print_gflops_row("WMMA No-Transpose (Level 16)", ms_wmma_notranspose, M, N, K, gflops_ref_f16);
     printf("+-------------------------------+------------+----------+\n");
 
     printf("\nAll kernels verified against cuBLAS reference.\n");
