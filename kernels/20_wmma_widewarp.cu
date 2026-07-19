@@ -1,27 +1,12 @@
-// Phase 18: Deep-K WMMA + threadblock swizzle for L2 reuse
+// Phase 20: Occupancy-maximized WMMA — 1024 threads, 1x2 warp tiles, scalar SMEM stores
 //
-// Change from Phase 17: remap which output tile each block computes, so that
-// blocks launched close together in time (and therefore likely co-resident
-// or in adjacent waves across the 40 SMs) also share the same B column-tile
-// range. This is CUTLASS's GemmIdentityThreadblockSwizzle idea, simplified.
-//
-// Reverted __launch_bounds__ to the plain single-arg form -- the (NUM_THREADS, 2)
-// occupancy hint from Phase 17 showed no clear win (and the benchmark run it
-// was tested against was noisy: cuBLAS reference swung ~16% across your last
-// three runs, so that result alone isn't strong evidence either way). This
-// keeps the swizzle experiment isolated from the occupancy question.
-//
-// remap_block() below is a group-based rasterization with GROUP_M=8: it's a
-// mathematical bijection over the (by, bx) grid *by construction* (worked out
-// on paper, not by execution -- see reasoning in the accompanying explanation),
-// so it can't create duplicate or missing output tiles. It assumes
-// gridDim.y is an exact multiple of GROUP_M, which holds for this problem
-// (M=4096, BM=128 -> gridDim.y=32, GROUP_M=8 divides evenly). If you change
-// M or BM such that this no longer divides evenly, this mapping needs
-// adjusting -- it will not silently corrupt output within this assumption,
-// but the assumption must hold.
-//
-// Still not compiled/executed in my sandbox -- verify against cuBLAS.
+// Change from Phase 19: NUM_THREADS goes from 512 to 1024 (32 warps = full SM).
+// To fit at that occupancy without register spilling, each warp's output tile
+// is 1x2 (WARP_TILES_M=1, WARP_TILES_N=2) instead of 2x2 — half the fragments
+// per warp. Same BM=128, BK=32, scalar stores, swizzle (GROUP_M=4) as Phase 19.
+// The question this phase answers: is Phase 15-19's 50% static occupancy (1 of
+// 2 possible resident blocks on Turing from ~96 registers/thread) hiding a
+// memory-latency problem that only full occupancy can fix?
 
 #include "../common.cuh"
 #include <mma.h>
@@ -54,9 +39,7 @@ constexpr int B_ITERS = (B_VECS + NUM_THREADS - 1) / NUM_THREADS;
 static_assert(A_ITERS <= 2 && B_ITERS <= 2,
     "Prefetch register arrays are sized for <=2 iters -- bump them if you grow BM/BN/BK.");
 
-// Remaps CUDA's default raster launch order into groups of GROUP_M rows so
-// that consecutively-launched blocks share bx (same B column-tile). Proof
-// this is a bijection over [0,gridDim.y) x [0,gridDim.x): for a fixed
+// Remaps CUDA's default raster launch order into groups of GROUP_M=4 rows so
 // group_id, as idx_in_group sweeps 0..(GROUP_M*gridDim.x - 1), by takes each
 // of GROUP_M values and bx takes each of gridDim.x values exactly once
 // (idx_in_group % GROUP_M selects by's offset, idx_in_group / GROUP_M
@@ -108,7 +91,11 @@ __device__ __forceinline__ void store_A_regs_to_smem(
         if (i < A_VECS) {
             int idx = i * 8;
             int r = idx / BK, c = idx % BK;
-            reinterpret_cast<uint4*>(&As[r][c])[0] = regs[j];
+            const __half* src = reinterpret_cast<const __half*>(&regs[j]);
+            #pragma unroll
+            for (int e = 0; e < 8; e++) {
+                As[r][c + e] = src[e];
+            }
         }
     }
 }
@@ -121,7 +108,11 @@ __device__ __forceinline__ void store_B_regs_to_smem(
         if (i < B_VECS) {
             int idx = i * 8;
             int k = idx / BN, n = idx % BN;
-            reinterpret_cast<uint4*>(&Bs[k][n])[0] = regs[j];
+            const __half* src = reinterpret_cast<const __half*>(&regs[j]);
+            #pragma unroll
+            for (int e = 0; e < 8; e++) {
+                Bs[k][n + e] = src[e];
+            }
         }
     }
 }
@@ -131,8 +122,8 @@ gemm_wmma_widewarp(int M, int N, int K,
                     const __half* __restrict__ A,
                     const __half* __restrict__ B,
                     float* __restrict__ C) {
-    __shared__ __half As[2][BM][BK + SKEW_HALF];
-    __shared__ __half Bs[2][BK][BN + SKEW_HALF];
+    __shared__ alignas(16) __half As[2][BM][BK + SKEW_HALF];
+    __shared__ alignas(16) __half Bs[2][BK][BN + SKEW_HALF];
 
     const int tid = threadIdx.x;
     int by, bx;

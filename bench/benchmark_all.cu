@@ -79,6 +79,10 @@ extern float run_wmma_scalarstore(int M, int N, int K,
                                    const __half* d_A, const __half* d_B, float* d_C,
                                    int warmup_iters, int bench_iters);
 
+extern float run_wmma_widewarp(int M, int N, int K,
+                                const __half* d_A, const __half* d_B, float* d_C,
+                                int warmup_iters, int bench_iters);
+
 struct KernelEntry {
     const char* name;
     float (*fp32_kernel)(int, int, int, const float*, const float*, float*, int, int);
@@ -221,6 +225,9 @@ int main() {
 
     float ms_wmma_scalarstore = run_wmma_scalarstore(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
     print_gflops_row("WMMA ScalarStore (Level 19)", ms_wmma_scalarstore, M, N, K, gflops_ref_f16);
+
+    float ms_wmma_widewarp = run_wmma_widewarp(M, N, K, d_A_f16, d_B_f16, d_C_scratch, WARMUP, BENCH);
+    print_gflops_row("WMMA WideWarp (Level 20)", ms_wmma_widewarp, M, N, K, gflops_ref_f16);
     printf("+-------------------------------+------------+----------+\n");
 
     printf("\nAll kernels verified against cuBLAS reference.\n");
