@@ -107,7 +107,7 @@ __device__ __forceinline__ void store_B_regs_to_smem(
     }
 }
 
-__global__ void __launch_bounds__(NUM_THREADS, 2)
+__global__ void __launch_bounds__(NUM_THREADS)
     gemm_wmma_deepk(int M, int N, int K,
                     const __half *__restrict__ A,
                     const __half *__restrict__ B,
