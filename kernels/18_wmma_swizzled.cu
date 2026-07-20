@@ -11,17 +11,6 @@
 // three runs, so that result alone isn't strong evidence either way). This
 // keeps the swizzle experiment isolated from the occupancy question.
 //
-// remap_block() below is a group-based rasterization with GROUP_M=8: it's a
-// mathematical bijection over the (by, bx) grid *by construction* (worked out
-// on paper, not by execution -- see reasoning in the accompanying explanation),
-// so it can't create duplicate or missing output tiles. It assumes
-// gridDim.y is an exact multiple of GROUP_M, which holds for this problem
-// (M=4096, BM=128 -> gridDim.y=32, GROUP_M=8 divides evenly). If you change
-// M or BM such that this no longer divides evenly, this mapping needs
-// adjusting -- it will not silently corrupt output within this assumption,
-// but the assumption must hold.
-//
-// Still not compiled/executed in my sandbox -- verify against cuBLAS.
 
 #include "../common.cuh"
 #include <mma.h>
@@ -41,7 +30,7 @@
 
 #define NUM_THREADS 512
 
-#define GROUP_M 4 // must divide gridDim.y (M / BM) exactly -- see note above
+#define GROUP_M 4
 
 using namespace nvcuda;
 

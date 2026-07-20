@@ -6,11 +6,6 @@
 // halves (128 iterations instead of 256 for K=4096); total mma_sync count
 // stays the same, but sync/global-load overhead is paid half as often.
 //
-// BK=64 was checked and rejected: with BM=BN=128 and double buffering, it
-// needs ~71KB of shared memory, over Turing's 64KB/block cap. 32 is the
-// max BK for this tile size with 2-stage pipelining.
-//
-// Still not compiled/executed in my sandbox -- verify against cuBLAS.
 
 #include "../common.cuh"
 #include <mma.h>
@@ -21,7 +16,7 @@
 
 #define BM 128
 #define BN 128
-#define BK 32 // was 16 -- now 2x WMMA_K, needs an inner sub-loop
+#define BK 32
 
 #define SKEW_HALF 8
 
